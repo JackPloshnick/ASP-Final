@@ -239,6 +239,7 @@ for (i in 1:num.boostraps){
   bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
   
   Xfull = Xfull.original[bootstramp.sample.indexes,]
+  Y = Y.original[bootstramp.sample.indexes]
 
   # With Cross Validation
   indexes = 1:1074 #963 + 111
