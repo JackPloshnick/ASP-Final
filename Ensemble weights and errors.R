@@ -1,5 +1,5 @@
 ########## Determining weights and errors for regress.func
-
+# Note Results Array is data generated from "MakingBoostraps.R", or alternatively imported from "Boostrap Samples"
 
 regress.func <- function(Y, preds.var){
   
