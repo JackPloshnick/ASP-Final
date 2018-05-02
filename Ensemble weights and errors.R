@@ -1,9 +1,8 @@
-########## Determining weights and errors for regress.func
+########## Determining weights and errors for regress.func and EBMA
 # Note Results Array is data generated from "MakingBoostraps.R", or alternatively imported from "Boostrap Samples"
 
 regress.func <- function(Y, preds.var){
   
-  # need to smartly figure out which columns are not NA 
   orgcols <- length(preds.var[1,])
   notNA <- which(!is.na(preds.var[1,]))
   predX <- preds.var[,notNA ]
