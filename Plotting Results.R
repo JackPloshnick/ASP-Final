@@ -18,7 +18,7 @@ ggplot(plotting_data_no7, aes(x = plotting_data_no7$Names_no7, y = plotting_data
   xlab("Model") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
 
-##################### Plotting regress.func results without KRLS
+##################### Plotting regress.func results with KRLS
 
 plotting_data<- as.data.frame(mean.coefs)
 
@@ -39,18 +39,18 @@ ggplot(plotting_data, aes(x = plotting_data$Names, y = plotting_data$mean.coefs)
 
 ################# Plotting EBMA results without KRLS
 
-plotting_data_montgomery<- as.data.frame(mean_coefs_montgomery_no7)
+plotting_data_EBMA<- as.data.frame(mean_coefs_EBMA_no7)
 
 Names_no7 <- c("Lasso", "Elastic Net a = .5", "Elastic Net a = .25", "Bayesian GLM", "BART",
                "Random Forest", "SVM_SMO", "Simple Average")
 
-plotting_data_montgomery <- cbind(Names_no7, plotting_data_montgomery)
-upper_montgomery<-(mean_coefs_montgomery_no7+ 1.96*error_montgomery_no7)
-lower_montgomery<- (mean_coefs_montgomery_no7 - 1.96*error_montgomery_no7)
+plotting_data_EBMA <- cbind(Names_no7, plotting_data_EBMA)
+upper_EBMA<-(mean_coefs_EBMA_no7+ 1.96*error_EBMA_no7)
+lower_EBMA<- (mean_coefs_EBMA_no7 - 1.96*error_EBMA_no7)
 
-ggplot(plotting_data_montgomery, aes(x = plotting_data_montgomery$Names, y = plotting_data_montgomery$mean_coefs_montgomery_no7)) +
+ggplot(plotting_data_EBMA, aes(x = plotting_data_EBMA$Names, y = plotting_data_EBMA$mean_coefs_EBMA_no7)) +
   geom_point(size = 3) +
-  geom_errorbar(aes(ymax = upper_montgomery, ymin = lower_montgomery))  +
+  geom_errorbar(aes(ymax = upper_EBMA, ymin = lower_EBMA))  +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))+ 
   labs(title = "Model weights of  EBMA")+
   ylab("Model Weights")+
@@ -59,17 +59,17 @@ ggplot(plotting_data_montgomery, aes(x = plotting_data_montgomery$Names, y = plo
 
 ############ Plotting regress.func, EBMA comparison without KRLS
 
-colnames(plotting_data_montgomery)[2] <- "coef"
-plotting_data_montgomery$type <- "EBMA"
-plotting_data_montgomery <- cbind(plotting_data_montgomery, error_montgomery_no7)
-colnames(plotting_data_montgomery)[4] <- "error"
+colnames(plotting_data_EBMA)[2] <- "coef"
+plotting_data_EBMA$type <- "EBMA"
+plotting_data_EBMA <- cbind(plotting_data_EBMA, error_EBMA_no7)
+colnames(plotting_data_EBMA)[4] <- "error"
 
 colnames(plotting_data_no7)[2] <- "coef"
 plotting_data_no7$type <- "Regression"
 plotting_data_no7 <- cbind(plotting_data_no7, error_no7)
 colnames(plotting_data_no7)[4] <- "error"
 
-all_data <- rbind(plotting_data_no7, plotting_data_montgomery)
+all_data <- rbind(plotting_data_no7, plotting_data_EBMA)
 
 upper<-(all_data$coef+ 1.96*all_data$error)
 lower<- (all_data$coef - 1.96*all_data$error)

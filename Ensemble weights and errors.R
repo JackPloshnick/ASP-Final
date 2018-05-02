@@ -1,9 +1,8 @@
-########## Determining weights and errors for regress.func
-
+########## Determining weights and errors for regress.func and EBMA
+# Note Results Array is data generated from "MakingBoostraps.R", or alternatively imported from "Boostrap Samples"
 
 regress.func <- function(Y, preds.var){
   
-  # need to smartly figure out which columns are not NA 
   orgcols <- length(preds.var[1,])
   notNA <- which(!is.na(preds.var[1,]))
   predX <- preds.var[,notNA ]
@@ -21,11 +20,11 @@ regress.func <- function(Y, preds.var){
 }
 
 
-###excluding KRLS
+###### excluding KRLS regress.func
 
 Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#line 292 of rep code 
 
-excluding_8<- results[,c(1:6,8:9),]
+excluding_7<- results[,c(1:6,8:9),]
 
 set.seed(10)
 seednum = sample(10000,num.boostraps)
@@ -33,18 +32,14 @@ Y.boostrap = matrix(nrow = 1074,ncol = 500)
 for (i in 1:num.boostraps){
   set.seed(seednum[i])
   bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
-  
   ordered = bootstramp.sample.indexes[order(as.numeric(bootstramp.sample.indexes))]
-  
   Y.boostrap[,i] = Y.final[ordered]
-  
 }
 
 regress.func.results<- matrix(nrow = 500, ncol = 8)
 for(i in 1:500){
-  regress.func.results[i,] <- regress.func(Y.boostrap[,i], excluding_8[,,i])
+  regress.func.results[i,] <- regress.func(Y.boostrap[,i], excluding_7[,,i])
 }
-
 
 mean.coefs_no7 = numeric(8)
 error_no7 = numeric(8)
@@ -56,10 +51,57 @@ for (i in 1:8){
 mean.coefs_no7
 error_no7
 
-###### With KRLS
+
+
+###### excluding KRLS EBMA
+# Note: must run lines 25-37
+
+#install.packages("EBMAforecast")
+library(EBMAforecast)
+
+
+round_estimates <- function(x){
+  if (x >= 1 | x <= 0){
+    return(round(x)+0.001)}
+  else {return(x)}
+}
+
+
+rounded_output <- array(dim = c(1074,8,500))
+for (i in 1:length(excluding_7)){
+  rounded_output[i] <- round_estimates(excluding_7[i])
+}
+rounded_output
+
+
+EBMA_results_no7 <- data.frame()
+Names <- c("Lasso", "Elastic Net a = .5", "Elastic Net a = .25", "Bayesian GLM", "BART", "Random Forest", "SVM_SMO", "Simple Average")
+for(i in 1:500){
+  results_slice <- rounded_output[,,i]
+  ForecastData <- makeForecastData(.predCalibration = results_slice, .outcomeCalibration = Y.boostrap[,i], .modelNames = Names)
+  myCal <- calibrateEnsemble(ForecastData)
+  weights <- myCal@modelWeights
+  EBMA_results_no7 <- rbind(EBMA_results_no7, weights)
+}
+colnames(EBMA_results_no7) <- Names
+head(EBMA_results_no7)
+
+
+mean_coefs_EBMA_no7 = numeric(8)
+error_EBMA_no7 = numeric(8)
+for (i in 1:8){
+  error_EBMA_no7[i] =sd(EBMA_results_no7[,i])
+  mean_coefs_EBMA_no7[i] = mean(EBMA_results_no7[,i])
+}
+
+mean_coefs_EBMA_no7
+error_EBMA_no7
+
+
+
+###### including KRLS regress.func
+
 Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#line 292 of rep code 
-
-
 
 set.seed(10)
 seednum = sample(10000,num.boostraps)
@@ -67,18 +109,14 @@ Y.boostrap = matrix(nrow = 1074,ncol = 500)
 for (i in 1:num.boostraps){
   set.seed(seednum[i])
   bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
-  
   ordered = bootstramp.sample.indexes[order(as.numeric(bootstramp.sample.indexes))]
-  
   Y.boostrap[,i] = Y.final[ordered]
-  
 }
 
 regress.func.results<- matrix(nrow = 500, ncol = 9)
 for(i in 1:500){
   regress.func.results[i,] <- regress.func(Y.boostrap[,i], results[,,i])
 }
-
 
 mean.coefs = numeric(9)
 error = numeric(9)
@@ -89,7 +127,48 @@ for (i in 1:9){
 
 plotting_data<- as.data.frame(mean.coefs)
 plotting_data
-
 error
 
-############ Determining weights and errors for EBMA
+
+
+###### including KRLS EBMA
+# Note: must run lines 104-114
+
+round_estimates <- function(x){
+  if (x <= 0){
+    return(0.001)}
+  else if (x >= 0.999){
+    return(0.999)}
+  else {return(x)}
+}
+
+
+rounded_output <- array(dim = c(1074,9,500))
+for (i in 1:length(results)){
+  rounded_output[i] <- round_estimates(results[i])
+}
+rounded_output
+
+
+EBMA_results <- data.frame()
+Names = c("Lasso", "Elastic Net a = .5", "Elastic Net a = .25", "Bayesian GLM", "BART", "Random Forest",  "KRLS", "SVM_SMO", "Simple Average")
+for(i in 1:500){
+  results_slice <- rounded_output[,,i]
+  ForecastData <- makeForecastData(.predCalibration = results_slice, .outcomeCalibration = Y.boostrap[,i], .modelNames = Names)
+  myCal <- calibrateEnsemble(ForecastData)
+  weights <- myCal@modelWeights
+  EBMA_results <- rbind(EBMA_results, weights)
+}
+colnames(EBMA_results) <- Names
+EBMA_results
+
+
+mean_coefs_EBMA = numeric(9)
+error_EBMA = numeric(9)
+for (i in 1:9){
+  error_EBMA[i] =sd(EBMA_results[,i])
+  mean_coefs_EBMA[i] = mean(EBMA_results[,i])
+}
+
+mean_coefs_EBMA
+error_EBMA
