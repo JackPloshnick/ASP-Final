@@ -32,18 +32,14 @@ Y.boostrap = matrix(nrow = 1074,ncol = 500)
 for (i in 1:num.boostraps){
   set.seed(seednum[i])
   bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
-  
   ordered = bootstramp.sample.indexes[order(as.numeric(bootstramp.sample.indexes))]
-  
   Y.boostrap[,i] = Y.final[ordered]
-  
 }
 
 regress.func.results<- matrix(nrow = 500, ncol = 8)
 for(i in 1:500){
   regress.func.results[i,] <- regress.func(Y.boostrap[,i], excluding_7[,,i])
 }
-
 
 mean.coefs_no7 = numeric(8)
 error_no7 = numeric(8)
@@ -58,6 +54,7 @@ error_no7
 
 
 ###### excluding KRLS EBMA
+# Note: must run lines 25-37
 
 #install.packages("EBMAforecast")
 library(EBMAforecast)
@@ -101,11 +98,10 @@ mean_coefs_EBMA_no7
 error_EBMA_no7
 
 
+
 ###### including KRLS regress.func
 
 Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#line 292 of rep code 
-
-
 
 set.seed(10)
 seednum = sample(10000,num.boostraps)
@@ -113,18 +109,14 @@ Y.boostrap = matrix(nrow = 1074,ncol = 500)
 for (i in 1:num.boostraps){
   set.seed(seednum[i])
   bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
-  
   ordered = bootstramp.sample.indexes[order(as.numeric(bootstramp.sample.indexes))]
-  
   Y.boostrap[,i] = Y.final[ordered]
-  
 }
 
 regress.func.results<- matrix(nrow = 500, ncol = 9)
 for(i in 1:500){
   regress.func.results[i,] <- regress.func(Y.boostrap[,i], results[,,i])
 }
-
 
 mean.coefs = numeric(9)
 error = numeric(9)
@@ -138,15 +130,18 @@ plotting_data
 error
 
 
+
 ###### including KRLS EBMA
+# Note: must run lines 104-114
 
 round_estimates <- function(x){
   if (x <= 0){
     return(0.001)}
-  if (x >= 1){
+  else if (x >= 0.999){
     return(0.999)}
   else {return(x)}
 }
+
 
 rounded_output <- array(dim = c(1074,9,500))
 for (i in 1:length(results)){
@@ -166,6 +161,7 @@ for(i in 1:500){
 }
 colnames(EBMA_results) <- Names
 EBMA_results
+
 
 mean_coefs_EBMA = numeric(9)
 error_EBMA = numeric(9)
