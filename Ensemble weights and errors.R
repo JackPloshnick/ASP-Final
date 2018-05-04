@@ -1,7 +1,7 @@
 ########## Determining weights and errors for regress.func and EBMA
 # Note Results Array is data generated from "MakingBoostraps.R", or alternatively imported from "Boostrap Samples"
 
-regress.func <- function(Y, preds.var){
+regress.func <- function(Y, preds.var){ #this is the function from the proginal paper 
   
   orgcols <- length(preds.var[1,])
   notNA <- which(!is.na(preds.var[1,]))
@@ -22,9 +22,39 @@ regress.func <- function(Y, preds.var){
 
 ###### excluding KRLS regress.func
 
-Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#line 292 of rep code 
+Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#Simply redifines Y
 
-excluding_7<- results[,c(1:6,8:9),]
+excluding_7<- results[,c(1:6,8:9),] #excludes KRLS model
+
+set.seed(10)
+seednum = sample(10000,num.boostraps)
+Y.boostrap = matrix(nrow = 1074,ncol = 500) #above code is to replicate bootstrap conditions 
+for (i in 1:num.boostraps){
+  set.seed(seednum[i])
+  bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
+  ordered = bootstramp.sample.indexes[order(as.numeric(bootstramp.sample.indexes))]
+  Y.boostrap[,i] = Y.final[ordered]
+} #this loop gives us the Y values that match up with the 500 samples 
+
+regress.func.results<- matrix(nrow = 500, ncol = 8)
+for(i in 1:500){
+  regress.func.results[i,] <- regress.func(Y.boostrap[,i], excluding_7[,,i])
+} #this loop gives us ensemble weights for each sample 
+
+mean.coefs_no7 = numeric(8)
+error_no7 = numeric(8)
+for (i in 1:8){
+  error_no7[i] =sd(regress.func.results[,i])
+  mean.coefs_no7[i] = mean(regress.func.results[,i])
+} #gives us mean and error for all 500 samples 
+
+mean.coefs_no7
+error_no7
+
+###### including KRLS regress.func
+#Identical to above, except the KRLS model is includeds 
+
+Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#line 292 of rep code 
 
 set.seed(10)
 seednum = sample(10000,num.boostraps)
@@ -36,25 +66,36 @@ for (i in 1:num.boostraps){
   Y.boostrap[,i] = Y.final[ordered]
 }
 
-regress.func.results<- matrix(nrow = 500, ncol = 8)
+regress.func.results<- matrix(nrow = 500, ncol = 9)
 for(i in 1:500){
-  regress.func.results[i,] <- regress.func(Y.boostrap[,i], excluding_7[,,i])
+  regress.func.results[i,] <- regress.func(Y.boostrap[,i], results[,,i])
 }
 
-mean.coefs_no7 = numeric(8)
-error_no7 = numeric(8)
-for (i in 1:8){
-  error_no7[i] =sd(regress.func.results[,i])
-  mean.coefs_no7[i] = mean(regress.func.results[,i])
+mean.coefs = numeric(9)
+error = numeric(9)
+for (i in 1:9){
+  error[i] =sd(regress.func.results[,i])
+  mean.coefs[i] = mean(regress.func.results[,i])
 }
 
-mean.coefs_no7
-error_no7
-
-
+plotting_data<- as.data.frame(mean.coefs)
+plotting_data
+error
 
 ###### excluding KRLS EBMA
-# Note: must run lines 25-37
+Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#Simply redifines Y
+
+excluding_7<- results[,c(1:6,8:9),] #excludes KRLS model
+
+set.seed(10)
+seednum = sample(10000,num.boostraps)
+Y.boostrap = matrix(nrow = 1074,ncol = 500) #above code is to replicate bootstrap conditions 
+for (i in 1:num.boostraps){
+  set.seed(seednum[i])
+  bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
+  ordered = bootstramp.sample.indexes[order(as.numeric(bootstramp.sample.indexes))]
+  Y.boostrap[,i] = Y.final[ordered]
+} #this loop gives us the Y values that match up with the 500 samples 
 
 #install.packages("EBMAforecast")
 library(EBMAforecast)
@@ -98,41 +139,20 @@ mean_coefs_EBMA_no7
 error_EBMA_no7
 
 
+###### including KRLS EBMA
+Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#Simply redifines Y
 
-###### including KRLS regress.func
-
-Y.final<- approve_bi<- ifelse(svdat$approval<3, 1, 0)#line 292 of rep code 
+excluding_7<- results[,c(1:6,8:9),] #excludes KRLS model
 
 set.seed(10)
 seednum = sample(10000,num.boostraps)
-Y.boostrap = matrix(nrow = 1074,ncol = 500)
+Y.boostrap = matrix(nrow = 1074,ncol = 500) #above code is to replicate bootstrap conditions 
 for (i in 1:num.boostraps){
   set.seed(seednum[i])
   bootstramp.sample.indexes = sample(1074,1074,replace = TRUE)
   ordered = bootstramp.sample.indexes[order(as.numeric(bootstramp.sample.indexes))]
   Y.boostrap[,i] = Y.final[ordered]
-}
-
-regress.func.results<- matrix(nrow = 500, ncol = 9)
-for(i in 1:500){
-  regress.func.results[i,] <- regress.func(Y.boostrap[,i], results[,,i])
-}
-
-mean.coefs = numeric(9)
-error = numeric(9)
-for (i in 1:9){
-  error[i] =sd(regress.func.results[,i])
-  mean.coefs[i] = mean(regress.func.results[,i])
-}
-
-plotting_data<- as.data.frame(mean.coefs)
-plotting_data
-error
-
-
-
-###### including KRLS EBMA
-# Note: must run lines 104-114
+} #this loop gives us the Y values that match up with the 500 samples 
 
 round_estimates <- function(x){
   if (x <= 0){

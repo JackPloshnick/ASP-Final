@@ -1,3 +1,5 @@
+library(ggplot2)
+
 ##################### Plotting regress.func results without KRLS
 
 plotting_data_no7<- as.data.frame(mean.coefs_no7)
